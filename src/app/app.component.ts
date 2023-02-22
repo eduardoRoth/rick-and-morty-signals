@@ -1,14 +1,18 @@
-import { NxWelcomeComponent } from './nx-welcome.component';
 import { RouterModule } from '@angular/router';
-import { Component } from '@angular/core';
+import {
+  Component,
+  EnvironmentInjector,
+  importProvidersFrom,
+} from '@angular/core';
+import { IonicModule } from '@ionic/angular';
 
 @Component({
   standalone: true,
-  imports: [NxWelcomeComponent, RouterModule],
+  imports: [RouterModule, IonicModule],
   selector: 'signals-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
-  title = 'signals';
+  constructor(public environmentInjector: EnvironmentInjector) {}
 }

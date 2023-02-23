@@ -56,6 +56,7 @@ export default class HomeComponent {
   isLoading = signal(true);
   charactersService = inject(CharactersService);
   characters$ = fromSignal(this.searchQuery).pipe(
+    tap(() => this.isLoading.set(true)),
     switchMap((query) => this.charactersService.getCharacters(query)),
     tap(() => this.isLoading.set(false))
   );
@@ -68,7 +69,6 @@ export default class HomeComponent {
   }
 
   updateQuery(event: any) {
-    this.isLoading.set(true);
     this.searchQuery.set(event.target.value);
   }
 }

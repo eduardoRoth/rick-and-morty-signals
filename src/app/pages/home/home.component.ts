@@ -3,8 +3,10 @@ import { IonicModule } from '@ionic/angular';
 import CharactersService from '../../services/characters.service';
 import { AsyncPipe, JsonPipe, NgFor, NgIf } from '@angular/common';
 import { fromSignal } from '../../utils/fromSignal';
-import { map, switchMap, tap } from 'rxjs';
+import { debounceTime, map, Observable, startWith, switchMap, tap } from 'rxjs';
 import CharacterCardComponent from '../../components/character-card.component';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { fromObservable } from '../../utils/form-observable';
 
 @Component({
   standalone: true,
@@ -15,6 +17,7 @@ import CharacterCardComponent from '../../components/character-card.component';
     NgIf,
     NgFor,
     CharacterCardComponent,
+    ReactiveFormsModule,
   ],
   selector: 'signals-home',
   template: `
@@ -29,9 +32,7 @@ import CharacterCardComponent from '../../components/character-card.component';
         <ion-searchbar
           color="primary"
           placeholder="Enter a character's name"
-          [value]="searchQuery()"
-          (ionChange)="updateQuery($event)"
-          [debounce]="300"
+          [formControl]="searchQuery"
         />
       </ion-toolbar>
     </ion-header>
@@ -42,33 +43,26 @@ import CharacterCardComponent from '../../components/character-card.component';
           size-sm="6"
           size-md="3"
           size-xl="3"
-          *ngFor="let character of characters$ | async"
+          *ngFor="let character of characters()"
         >
           <signals-character-card [character]="character" />
         </ion-col>
       </ion-row>
     </ion-content>
   `,
-  styles: [``],
 })
 export default class HomeComponent {
-  searchQuery = signal('');
+  searchQuery = new FormControl('');
   isLoading = signal(true);
   charactersService = inject(CharactersService);
-  characters$ = fromSignal(this.searchQuery).pipe(
-    tap(() => this.isLoading.set(true)),
-    switchMap((query) => this.charactersService.getCharacters(query)),
-    tap(() => this.isLoading.set(false))
+  characters = fromObservable(
+    (this.searchQuery.valueChanges as Observable<string>).pipe(
+      debounceTime(300),
+      startWith(''),
+      tap(() => this.isLoading.set(true)),
+      switchMap((query: string) => this.charactersService.getCharacters(query)),
+      tap(() => this.isLoading.set(false))
+    ),
+    []
   );
-  ngOnInit() {
-    effect(() => {
-      console.log(
-        `Using the search query ${this.searchQuery()} to fetch Rick & Morty characters`
-      );
-    });
-  }
-
-  updateQuery(event: any) {
-    this.searchQuery.set(event.target.value);
-  }
 }

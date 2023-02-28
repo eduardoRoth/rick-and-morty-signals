@@ -1,11 +1,9 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
 import CharactersService from '../../services/characters.service';
 import { AsyncPipe, JsonPipe, NgFor, NgIf } from '@angular/common';
-import { fromSignal } from '../../utils/fromSignal';
-import { debounceTime, map, Observable, startWith, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, debounceTime, startWith, switchMap, tap } from 'rxjs';
 import CharacterCardComponent from '../../components/character-card.component';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { fromObservable } from '../../utils/form-observable';
 
 @Component({
@@ -17,7 +15,6 @@ import { fromObservable } from '../../utils/form-observable';
     NgIf,
     NgFor,
     CharacterCardComponent,
-    ReactiveFormsModule,
   ],
   selector: 'signals-home',
   template: `
@@ -30,20 +27,21 @@ import { fromObservable } from '../../utils/form-observable';
       </ion-toolbar>
       <ion-toolbar color="primary">
         <ion-searchbar
-          color="primary"
-          placeholder="Enter a character's name"
-          [formControl]="searchQuery"
+            color="primary"
+            placeholder="Enter a character's name"
+            [value]="searchQuery.value"
+            (ionChange)="searchQuery.next($any($event).target.value)"
         />
       </ion-toolbar>
     </ion-header>
     <ion-content>
       <ion-row>
         <ion-col
-          size="12"
-          size-sm="6"
-          size-md="3"
-          size-xl="3"
-          *ngFor="let character of characters()"
+            size="12"
+            size-sm="6"
+            size-md="3"
+            size-xl="3"
+            *ngFor="let character of characters()"
         >
           <signals-character-card [character]="character" />
         </ion-col>
@@ -52,17 +50,16 @@ import { fromObservable } from '../../utils/form-observable';
   `,
 })
 export default class HomeComponent {
-  searchQuery = new FormControl('');
   isLoading = signal(true);
+  searchQuery = new BehaviorSubject('');
   charactersService = inject(CharactersService);
   characters = fromObservable(
-    (this.searchQuery.valueChanges as Observable<string>).pipe(
-      debounceTime(300),
-      startWith(''),
-      tap(() => this.isLoading.set(true)),
-      switchMap((query: string) => this.charactersService.getCharacters(query)),
-      tap(() => this.isLoading.set(false))
-    ),
-    []
+      this.searchQuery.pipe(
+          debounceTime(200),
+          tap(() => this.isLoading.set(true)),
+          switchMap((query: string) => this.charactersService.getCharacters(query)),
+          tap(() => this.isLoading.set(false))
+      ),
+      []
   );
 }

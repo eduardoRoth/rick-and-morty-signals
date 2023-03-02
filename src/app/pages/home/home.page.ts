@@ -49,7 +49,7 @@ import { fromObservable } from '../../utils/form-observable';
     </ion-content>
   `,
 })
-export default class HomeComponent {
+export default class HomePage {
   isLoading = signal(true);
   searchQuery = new BehaviorSubject('');
   charactersService = inject(CharactersService);

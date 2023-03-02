@@ -5,6 +5,6 @@ export const appRoutes: Route[] = [
     title: 'Home',
     path: '',
     pathMatch: 'full',
-    loadComponent: () => import('./pages/home/home.component'),
+    loadComponent: () => import('./pages/home/home.page'),
   },
 ];
